@@ -1,8 +1,10 @@
 import bs4
 import bleach
+import json
 
 from django.db import models, IntegrityError
 from django.conf import settings
+from rest_framework import status, response
 
 from ara.db.models import MetaDataModel
 
@@ -99,7 +101,11 @@ class Article(MetaDataModel):
         except AssertionError:
             raise IntegrityError('self.parent_board should be parent_board of self.parent_topic')
 
-        self.content = self.sanitize(self.content)
+        try:
+            self.sanitize(self.title, json.loads(self.content))
+        except json.decoder.JSONDecodeError as e:
+            print(f'JSONDecodeError: {e}\n{self.content}')
+            return
 
         self.content_text = ' '.join(bs4.BeautifulSoup(self.content, features='html5lib').find_all(text=True))
 
@@ -134,7 +140,64 @@ class Article(MetaDataModel):
         ).count()
 
     @staticmethod
-    def sanitize(content):
-        #allowed_tags = bleach.ALLOWED_TAGS + [u'p', u'pre', u'span', u'h1', u'h2', u'br']
+    def sanitize(title, content):
+        assert title == bleach.clean(title)
 
-        return content #bleach.linkify(bleach.clean(content, tags=allowed_tags))
+        followingTypes = {
+            "doc": ["paragraph", "heading"],
+            "paragraph": ["text"],
+            "heading": ["text"],
+            "marks": ["bold", "code"],
+            "attr": ["attrType"]
+        }
+
+        necessaryTags = {
+            "doc": ["type", "content"],
+            "paragraph": ["type", "content"],
+            "heading": ["type", "attrs", "content"],
+            "text": ["type", "text"],
+            "marks": ["type"],
+            "attrType": ["type", "level"]
+        }
+
+        availableTags = {
+            "doc": ["type", "content"],
+            "paragraph": ["type", "content"],
+            "heading": ["type", "attrs", "content"],
+            "text": ["type", "text", "marks"],
+            "marks": ["type"],
+            "attrType": ["type", "level"]
+        }
+
+        def sanitize_content(content, prev):
+            assert type(content) == dict
+            fTypes = followingTypes.get(prev, [None])
+            assert content.get("type") in fTypes, f'invalid type {content.get("type")} under {prev};\n{content}'
+            nTag = necessaryTags.get(content.get("type"), ["type"])
+            aTag = availableTags.get(content.get("type"), content.keys())
+            assert all(key in content.keys() for key in nTag) and all(key in aTag for key in content.keys()), f'invalid tag with {content.get("type")};\n{content}'
+            assert "text" not in content.keys() or type(content["text"]) == str, 'text is missing or not string'
+            assert "content" not in content.keys() or type(content["content"]) == list, 'content is not list'
+            assert "marks" not in content.keys() or type(content["marks"]) == list, 'marks is not list'
+            assert "attrs" not in content.keys() or type(content["attrs"]) == dict, 'attrs is not dict'
+            assert "level" not in content.keys() or type(content["level"]) == int, 'level is not int'
+
+            if "content" in content.keys():
+                for cont in content["content"]:
+                    sanitize_content(cont, content["type"])
+            if "marks" in content.keys():
+                for mark in content["marks"]:
+                    sanitize_content(mark, "marks")
+            if "attrs" in content.keys():
+                sanitize_content({**content["attrs"], "type": "attrType"}, "attrs")
+
+        try:
+            assert content["type"] == "doc"
+            if "content" not in content.keys():
+                return True
+            for cont in content["content"]:
+                sanitize_content(cont, "doc")
+            return True
+        except AssertionError as e:
+            print(f'AssertionError: {e}')
+            return response.response(status=status.HTTP_400_BAD_REQUEST)
