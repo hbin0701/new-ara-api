@@ -102,10 +102,13 @@ class Article(MetaDataModel):
             raise IntegrityError('self.parent_board should be parent_board of self.parent_topic')
 
         try:
-            self.sanitize(self.title, json.loads(self.content))
+            self.sanitize(self.title, json.loads(self.content))  # True
         except json.decoder.JSONDecodeError as e:
             print(f'JSONDecodeError: {e}\n{self.content}')
-            return
+            return response.response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except AssertionError as e:
+            print(f'AssertionError: {e}')
+            return response.response(status=status.HTTP_400_BAD_REQUEST)
 
         self.content_text = ' '.join(bs4.BeautifulSoup(self.content, features='html5lib').find_all(text=True))
 
@@ -141,63 +144,42 @@ class Article(MetaDataModel):
 
     @staticmethod
     def sanitize(title, content):
-        assert title == bleach.clean(title)
+        assert title == bleach.clean(title), f'title contains invalid text;\n{title}'
+        assert type(content) == dict, f'article content is not JSONForamt;\n{content}'
+        assert content.get("type") == "doc", f'article content must begin with doc;\n{content}'
+        assert list(content.keys()) == ["type", "content"], f'invalid or missing keys in article content;\n{content}'
+        assert type(content.get("content")) == list, f'content is not list;\n{content}'
 
-        followingTypes = {
+        following = {
             "doc": ["paragraph", "heading"],
             "paragraph": ["text"],
             "heading": ["text"],
-            "marks": ["bold", "code"],
-            "attr": ["attrType"]
+            "text": [],
+            "marks": ["bold", "code"]
         }
 
-        necessaryTags = {
-            "doc": ["type", "content"],
+        necessary = {
             "paragraph": ["type", "content"],
             "heading": ["type", "attrs", "content"],
-            "text": ["type", "text"],
-            "marks": ["type"],
-            "attrType": ["type", "level"]
+            "text": ["type", "text"]
         }
 
-        availableTags = {
-            "doc": ["type", "content"],
+        available = {
             "paragraph": ["type", "content"],
             "heading": ["type", "attrs", "content"],
-            "text": ["type", "text", "marks"],
-            "marks": ["type"],
-            "attrType": ["type", "level"]
+            "text": ["type", "text", "marks"]
         }
 
-        def sanitize_content(content, prev):
-            assert type(content) == dict
-            fTypes = followingTypes.get(prev, [None])
-            assert content.get("type") in fTypes, f'invalid type {content.get("type")} under {prev};\n{content}'
-            nTag = necessaryTags.get(content.get("type"), ["type"])
-            aTag = availableTags.get(content.get("type"), content.keys())
-            assert all(key in content.keys() for key in nTag) and all(key in aTag for key in content.keys()), f'invalid tag with {content.get("type")};\n{content}'
-            assert "text" not in content.keys() or type(content["text"]) == str, 'text is missing or not string'
-            assert "content" not in content.keys() or type(content["content"]) == list, 'content is not list'
-            assert "marks" not in content.keys() or type(content["marks"]) == list, 'marks is not list'
-            assert "attrs" not in content.keys() or type(content["attrs"]) == dict, 'attrs is not dict'
-            assert "level" not in content.keys() or type(content["level"]) == int, 'level is not int'
+        def sanitize_rec(content, prev):
+            assert content.get("type") in following[prev], f'invalid type {content.get("type")} under {prev};\n{content}'
+            assert type(content.get("content", [])) == list, f'content is not list;\n{content}'
+            assert type(content.get("marks", [])) == list, f'marks is not list;\n{content}'
+            assert type(content.get("attrs", {"level": 0}).get("level")) == int, f'invalid level in attr;\n{content}'
+            assert type(content.get("text", "")) == str, f'text is not string;\n{content}'
+            assert all(key in content.keys() for key in necessary[content.get("type")]), f'missing key for type {content.get("type")}; this type needs {necessary[content.get("type")]};\n{content}'
+            assert all(key in available[content.get("type")] for key in content.keys()), f'invalid key for type {content.get("type")}; available key for this type is {available[content.get("type")]};\n{content}'
+            content_chk = all(sanitize_rec(cont, content.get("type")) for cont in content.get("content", []))
+            marks_chk = all(mark.get("type") in following["marks"] for mark in content.get("marks", []))
+            return content_chk and marks_chk
 
-            if "content" in content.keys():
-                for cont in content["content"]:
-                    sanitize_content(cont, content["type"])
-            if "marks" in content.keys():
-                for mark in content["marks"]:
-                    sanitize_content(mark, "marks")
-            if "attrs" in content.keys():
-                sanitize_content({**content["attrs"], "type": "attrType"}, "attrs")
-
-        try:
-            assert content["type"] == "doc"
-            if "content" not in content.keys():
-                return True
-            for cont in content["content"]:
-                sanitize_content(cont, "doc")
-            return True
-        except AssertionError as e:
-            print(f'AssertionError: {e}')
-            return response.response(status=status.HTTP_400_BAD_REQUEST)
+        return all(sanitize_rec(cont, "doc") for cont in content.get("content"))
