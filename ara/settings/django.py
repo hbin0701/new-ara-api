@@ -21,6 +21,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_filters',
+    'reversion',
+    'reversion_compare',
     'django_extensions',
     'django_s3_storage',
     'drf_yasg',
@@ -41,6 +43,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
     'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'reversion.middleware.RevisionMiddleware',
 ]
 
 ROOT_URLCONF = 'ara.urls'
@@ -110,3 +113,8 @@ STATIC_URL = '/static/'
 INTERNAL_IPS = (
     '127.0.0.1',
 )
+
+
+# https://github.com/jedie/django-reversion-compare
+
+ADD_REVERSION_ADMIN = True

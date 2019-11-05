@@ -210,6 +210,29 @@ Django = ">=1.11"
 
 [[package]]
 category = "main"
+description = "An extension to the Django web framework that provides version control for model instances."
+name = "django-reversion"
+optional = false
+python-versions = "*"
+version = "3.0.4"
+
+[package.dependencies]
+django = ">=1.11"
+
+[[package]]
+category = "main"
+description = "history compare for django-reversion"
+name = "django-reversion-compare"
+optional = false
+python-versions = "*"
+version = "0.8.6"
+
+[package.dependencies]
+Django = ">=1.8"
+django-reversion = ">=2.0"
+
+[[package]]
+category = "main"
 description = "Django Amazon S3 file storage."
 name = "django-s3-storage"
 optional = false
@@ -564,7 +587,7 @@ python-versions = "*"
 version = "1.11.2"
 
 [metadata]
-content-hash = "408e3b1091e4a9a666f616c885955dac37ed712746115ab9b6f775bda9344467"
+content-hash = "e855ced4c41664fa6eaee1db7aa05ed8835a1e775b5a615112556c36a5c95019"
 python-versions = "^3.7"
 
 [metadata.hashes]
@@ -586,6 +609,8 @@ django-environ = ["6c9d87660142608f63ec7d5ce5564c49b603ea8ff25da595fd6098f6dc82a
 django-extensions = ["a9db7c56a556d244184f589f2437b4228de86ee45e5ebb837fb20c6d54e95ea5", "b58320d3fe3d6ae7d1d8e38959713fa92272f4921e662d689058d942a5b444f7"]
 django-filter = ["558c727bce3ffa89c4a7a0b13bc8976745d63e5fd576b3a9a851650ef11c401b", "c3deb57f0dd7ff94d7dce52a047516822013e2b441bed472b722a317658cfd14"]
 django-mysql = ["5ed13e3c4e4dc1671255bfc5a9f943320079af626a0c4d1a7f8baf276f5b9de2", "6a6d3b2b4b094418d67cc064b110d8ac31ca98a67b535568cf829bf052c718db"]
+django-reversion = ["1aeed0b723b5be14c4dc7e7c7e03f9538e7ef29c997585e2e8fb414cf38818f4", "ed46722389fb2441860d471c7538967dee545bcee891d3d907b04f4baa98f5fa"]
+django-reversion-compare = ["989e9d3937446c6e9b6200dc5d8562f75140b0fce4ecd4c24bc472f6b3f80528", "a0e77925d8f373f7536c6749aa197a136a55246765ac2c1b456244fdd8b086bb", "c7b08298b5ce93ccd07a639c6506842649e5f4efd8ffd53317a08323456add15"]
 django-s3-storage = ["14b8670a0d32b364f76174675904deffedb10332ad3aa2df84e98a7f6479fae9"]
 djangorestframework = ["5488aed8f8df5ec1d70f04b2114abc52ae6729748a176c453313834a9ee179c8", "dc81cbf9775c6898a580f6f1f387c4777d12bd87abf0f5406018d32ccae71090"]
 djangorestframework-filters = ["d53692f9f0dfcdc1df4e890787f7212c3602476b85faffdefec02e2bc386c5b6", "dfb58706f5f00ce72a01968d99fcc3e500bdeaaa275568fd60ae868bf2b90aad"]
