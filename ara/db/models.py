@@ -25,7 +25,3 @@ class MetaDataModel(models.Model):
             return self.versions[-1].revision.date_created
 
         return None
-
-    @property
-    def deleted_at(self):
-        return None

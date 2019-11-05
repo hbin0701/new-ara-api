@@ -10,14 +10,10 @@ class UserProfile(MetaDataModel):
     class Meta(MetaDataModel.Meta):
         verbose_name = '유저 프로필'
         verbose_name_plural = '유저 프로필 목록'
-        unique_together = (
-            ('uid', 'deleted_at'),
-            ('sid', 'deleted_at'),
-            ('nickname', 'deleted_at'),
-        )
 
     uid = models.CharField(
         null=True,
+        unique=True,
         default=None,
         editable=False,
         max_length=30,
@@ -25,6 +21,7 @@ class UserProfile(MetaDataModel):
     )
     sid = models.CharField(
         null=True,
+        unique=True,
         default=None,
         editable=False,
         max_length=30,
@@ -43,6 +40,7 @@ class UserProfile(MetaDataModel):
     )
     nickname = models.CharField(
         blank=True,
+        unique=True,
         default='',
         max_length=128,
         verbose_name='닉네임',
