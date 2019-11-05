@@ -3,10 +3,10 @@ from django.conf import settings
 
 from django_mysql.models import JSONField
 
-from ara.db.models import MetaDataModel, MetaDataManager, MetaDataQuerySet
+from ara.db.models import MetaDataModel
 
 
-class CommentUpdateLogQuerySet(MetaDataQuerySet):
+class CommentUpdateLogQuerySet(models.QuerySet):
     def create(self, comment, updated_by):
         from apps.core.serializers.comment import BaseCommentSerializer
 
@@ -17,16 +17,12 @@ class CommentUpdateLogQuerySet(MetaDataQuerySet):
         })
 
 
-class CommentUpdateLogManager(MetaDataManager):
-    pass
-
-
 class CommentUpdateLog(MetaDataModel):
     class Meta(MetaDataModel.Meta):
         verbose_name = '댓글 변경 기록'
         verbose_name_plural = '댓글 변경 기록 목록'
 
-    objects = CommentUpdateLogManager.from_queryset(queryset_class=CommentUpdateLogQuerySet)()
+    objects = models.Manager.from_queryset(queryset_class=CommentUpdateLogQuerySet)()
 
     data = JSONField()
 

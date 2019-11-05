@@ -5,7 +5,7 @@ from django.conf import settings
 
 from django_mysql.models import JSONField
 
-from ara.db.models import MetaDataModel, MetaDataManager, MetaDataQuerySet
+from ara.db.models import MetaDataModel
 
 
 class ArticleReadLog(MetaDataModel):
@@ -43,7 +43,7 @@ class ArticleReadLog(MetaDataModel):
         )
 
 
-class ArticleUpdateLogQuerySet(MetaDataQuerySet):
+class ArticleUpdateLogQuerySet(models.QuerySet):
     def create(self, article, updated_by):
         from apps.core.serializers.article import BaseArticleSerializer
 
@@ -54,16 +54,12 @@ class ArticleUpdateLogQuerySet(MetaDataQuerySet):
         })
 
 
-class ArticleUpdateLogManager(MetaDataManager):
-    pass
-
-
 class ArticleUpdateLog(MetaDataModel):
     class Meta(MetaDataModel.Meta):
         verbose_name = '게시물 변경 기록'
         verbose_name_plural = '게시물 변경 기록 목록'
 
-    objects = ArticleUpdateLogManager.from_queryset(queryset_class=ArticleUpdateLogQuerySet)()
+    objects = models.Manager.from_queryset(queryset_class=ArticleUpdateLogQuerySet)()
 
     data = JSONField()
 
