@@ -76,7 +76,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                 Scrap.prefetch_my_scrap(self.request.user),
                 models.Prefetch(
                     'comment_set',
-                    queryset=Comment.objects.order_by('created_at').select_related(
+                    queryset=Comment.objects.order_by('id').select_related(
                         'attachment',
                     ).prefetch_related(
                         'comment_update_log_set',
@@ -85,7 +85,7 @@ class ArticleViewSet(viewsets.ModelViewSet, ActionAPIViewSet):
                         Report.prefetch_my_report(self.request.user),
                         models.Prefetch(
                             'comment_set',
-                            queryset=Comment.objects.order_by('created_at').select_related(
+                            queryset=Comment.objects.order_by('id').select_related(
                                 'attachment',
                             ).prefetch_related(
                                 'comment_update_log_set',

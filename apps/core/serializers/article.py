@@ -118,7 +118,7 @@ class BaseArticleSerializer(MetaDataModelSerializer):
 
         if view:
             queryset = view.filter_queryset(view.get_queryset()).filter(
-                created_at__gt=obj.created_at,
+                id__gt=obj.id,
             )
 
             return queryset.count() // view.paginator.page_size + 1
